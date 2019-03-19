@@ -80,7 +80,8 @@ class TypeScriptGenerator(
     classTransformers: List<ClassTransformer> = listOf(),
     ignoreSuperclasses: Set<KClass<*>> = setOf(),
     private val intTypeName: String = "number",
-    private val voidType: VoidType = VoidType.NULL
+    private val voidType: VoidType = VoidType.NULL,
+    private val export: Boolean = false
 ) {
     private val visitedClasses: MutableSet<KClass<*>> = java.util.HashSet()
     private val generatedDefinitions = mutableListOf<String>()
@@ -90,6 +91,14 @@ class TypeScriptGenerator(
         java.io.Serializable::class,
         Comparable::class
     ).plus(ignoreSuperclasses)
+    private val exportModifier: String
+        get() {
+            return if(export) {
+                "export "
+            } else {
+                return ""
+            }
+        }
 
     init {
         rootClasses.forEach { visitClass(it) }
@@ -185,12 +194,13 @@ class TypeScriptGenerator(
     }
 
     private fun generateEnum(klass: KClass<*>): String {
-        return "type ${klass.simpleName} = ${klass.java.enumConstants
+        return "${exportModifier}enum ${klass.mangleNestedClassName()} {\n${klass.java.enumConstants
             .map { constant: Any ->
-                constant.toString().toJSString()
+                constant.toString()
+            }.joinToString(",\n") {
+                "\t$it = '$it'"
             }
-            .joinToString(" | ")
-        };"
+        }\n}"
     }
 
     private fun generateInterface(klass: KClass<*>): String {
@@ -223,7 +233,7 @@ class TypeScriptGenerator(
         }
 
         var classNameWithContainingClassName:String = klass.mangleNestedClassName()
-        return "interface ${classNameWithContainingClassName}$templateParameters$extendsString {\n" +
+        return "${exportModifier}interface ${classNameWithContainingClassName}$templateParameters$extendsString {\n" +
             klass.declaredMemberProperties
                 .filter { !isFunctionType(it.returnType.javaType) }
                 .filter {
