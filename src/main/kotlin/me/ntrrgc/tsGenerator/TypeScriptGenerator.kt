@@ -115,7 +115,7 @@ class TypeScriptGenerator(
 
     private fun formatClassType(type: KClass<*>): String {
         visitClass(type)
-        return type.simpleName!!
+        return type.mangleNestedClassName()
     }
 
     private fun formatKType(kType: KType): TypeScriptType {
@@ -222,7 +222,8 @@ class TypeScriptGenerator(
             ""
         }
 
-        return "interface ${klass.simpleName}$templateParameters$extendsString {\n" +
+        var classNameWithContainingClassName:String = klass.mangleNestedClassName()
+        return "interface ${classNameWithContainingClassName}$templateParameters$extendsString {\n" +
             klass.declaredMemberProperties
                 .filter { !isFunctionType(it.returnType.javaType) }
                 .filter {
@@ -240,6 +241,13 @@ class TypeScriptGenerator(
                 }
                 .joinToString("") +
             "}"
+    }
+
+    private fun KClass<*>.mangleNestedClassName(): String{
+        var name =  qualifiedName ?: ""
+        name = name.removePrefix("${java.`package`?.name?:""}.")
+        name = name.splitToSequence('.').joinToString("")
+        return name
     }
 
     private fun isFunctionType(javaType: Type): Boolean {
