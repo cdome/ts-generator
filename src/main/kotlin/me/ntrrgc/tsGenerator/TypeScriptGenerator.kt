@@ -247,7 +247,7 @@ class TypeScriptGenerator(
                     val propertyType = pipeline.transformPropertyType(property.returnType, property, klass)
 
                     val formattedPropertyType = formatKType(propertyType).formatWithoutParenthesis()
-                    "    $propertyName: $formattedPropertyType;\n"
+                    "    $propertyName${if(voidType == VoidType.ELVIS){"?"}else{""}}: $formattedPropertyType;\n"
                 }
                 .joinToString("") +
             "}"
