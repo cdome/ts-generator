@@ -23,7 +23,6 @@ import kotlin.reflect.*
 import kotlin.reflect.full.createType
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.full.isSubclassOf
-import kotlin.reflect.full.superclasses
 import kotlin.reflect.jvm.javaType
 
 /**
@@ -189,12 +188,12 @@ class TypeScriptGenerator(
     }
 
     private fun generateEnum(klass: KClass<*>): String {
-        return "type ${klass.simpleName} = ${klass.java.enumConstants
+        return "enum ${klass.simpleName} {\n ${klass.java.enumConstants
             .map { constant: Any ->
                 constant.toString().toJSString()
             }
-            .joinToString(" | ")
-        };"
+            .joinToString("\t,\n")
+        }}\n"
     }
 
     private fun generateInterface(klass: KClass<*>): String {
