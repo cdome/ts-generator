@@ -260,7 +260,12 @@ interface ClassWithMember {
     interface ClassWithEnum {
         direction: Direction;
     }
-    """, """type Direction = "North" | "West" | "South" | "East";"""))
+    """, """enum Direction {
+	North = 'North',
+	West = 'West',
+	South = 'South',
+	East = 'East'
+}"""))
         }
 
         it("handles DataClass") {
@@ -411,9 +416,9 @@ interface Widget {
             ))
         }
 
-        it("handles JavaClass") {
-            assertGeneratedCode(JavaClass::class, setOf("""
-    interface JavaClass {
+        it("handles KotlinClass") {
+            assertGeneratedCode(KotlinClass::class, setOf("""
+    interface KotlinClass {
         name: string;
         results: int[];
         multidimensional: string[][];
@@ -422,9 +427,9 @@ interface Widget {
     """))
         }
 
-        it("handles JavaClassWithNullables") {
-            assertGeneratedCode(JavaClassWithNullables::class, setOf("""
-    interface JavaClassWithNullables {
+        it("handles KotlinClassWithNullables") {
+            assertGeneratedCode(KotlinClassWithNullables::class, setOf("""
+    interface KotlinClassWithNullables {
         name: string;
         results: int[];
         nextResults: int[] | null;
@@ -432,9 +437,9 @@ interface Widget {
     """))
         }
 
-        it("handles JavaClassWithNonnullAsDefault") {
-            assertGeneratedCode(JavaClassWithNonnullAsDefault::class, setOf("""
-    interface JavaClassWithNonnullAsDefault {
+        it("handles KotlinClassWithNonnullAsDefault") {
+            assertGeneratedCode(KotlinClassWithNonnullAsDefault::class, setOf("""
+    interface KotlinClassWithNonnullAsDefault {
         name: string;
         results: int[];
         nextResults: int[] | null;
@@ -442,9 +447,9 @@ interface Widget {
     """))
         }
 
-        it("handles JavaClassWithOptional") {
-            assertGeneratedCode(JavaClassWithOptional::class, setOf("""
-    interface JavaClassWithOptional {
+        it("handles KotlinClassWithOptional") {
+            assertGeneratedCode(KotlinClassWithOptional::class, setOf("""
+    interface KotlinClassWithOptional {
         name: string;
         surname: string | null;
     }
