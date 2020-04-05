@@ -81,7 +81,8 @@ class TypeScriptGenerator(
     ignoreSuperclasses: Set<KClass<*>> = setOf(),
     private val intTypeName: String = "number",
     private val voidType: VoidType = VoidType.NULL,
-    private val export: Boolean = false
+    private val export: Boolean = false,
+    private val commentGenerator: CommentGenerator? = null
 ) {
     private val visitedClasses: MutableSet<KClass<*>> = java.util.HashSet()
     private val generatedDefinitions = mutableListOf<String>()
@@ -246,8 +247,17 @@ class TypeScriptGenerator(
                     val propertyName = pipeline.transformPropertyName(property.name, property, klass)
                     val propertyType = pipeline.transformPropertyType(property.returnType, property, klass)
 
+                    val commentString = commentGenerator?.generatePropertyComment(property, klass)?.let { comment ->
+                        val comment = """/**
+                            ${comment.lines().map { line -> "|    *$line" }.joinToString("\n")}
+                            |    */
+                            |
+                        """.trimMargin()
+                        comment
+                    }?: ""
+
                     val formattedPropertyType = formatKType(propertyType).formatWithoutParenthesis()
-                    "    $propertyName${if(voidType == VoidType.ELVIS){"?"}else{""}}: $formattedPropertyType;\n"
+                    "$commentString    $propertyName${if(voidType == VoidType.ELVIS){"?"}else{""}}: $formattedPropertyType;\n"
                 }
                 .joinToString("") +
             "}"

@@ -17,10 +17,7 @@
 package me.ntrrgc.tsGenerator.tests
 
 import com.winterbe.expekt.should
-import me.ntrrgc.tsGenerator.ClassTransformer
-import me.ntrrgc.tsGenerator.TypeScriptGenerator
-import me.ntrrgc.tsGenerator.VoidType
-import me.ntrrgc.tsGenerator.onlyOnSubclassesOf
+import me.ntrrgc.tsGenerator.*
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
@@ -39,17 +36,17 @@ fun assertGeneratedCode(klass: KClass<*>,
                         mappings: Map<KClass<*>, String> = mapOf(),
                         classTransformers: List<ClassTransformer> = listOf(),
                         ignoreSuperclasses: Set<KClass<*>> = setOf(),
-                        voidType: VoidType = VoidType.NULL)
-{
+                        voidType: VoidType = VoidType.NULL,
+                        commentGenerator: CommentGenerator? = null) {
     val generator = TypeScriptGenerator(listOf(klass), mappings, classTransformers,
-        ignoreSuperclasses, intTypeName = "int", voidType = voidType)
+            ignoreSuperclasses, intTypeName = "int", voidType = voidType, commentGenerator = commentGenerator)
 
     val expected = expectedOutput
-        .map(TypeScriptDefinitionFactory::fromCode)
-        .toSet()
+            .map(TypeScriptDefinitionFactory::fromCode)
+            .toSet()
     val actual = generator.individualDefinitions
-        .map(TypeScriptDefinitionFactory::fromCode)
-        .toSet()
+            .map(TypeScriptDefinitionFactory::fromCode)
+            .toSet()
 
     actual.should.equal(expected)
 }
@@ -57,65 +54,83 @@ fun assertGeneratedCode(klass: KClass<*>,
 class Empty
 class ClassWithMember(val a: String)
 class SimpleTypes(
-    val aString: String,
-    var anInt: Int,
-    val aDouble: Double,
-    private val privateMember: String
+        val aString: String,
+        var anInt: Int,
+        val aDouble: Double,
+        private val privateMember: String
 )
+
 class ClassWithLists(
-    val aList: List<String>,
-    val anArrayList: ArrayList<String>
+        val aList: List<String>,
+        val anArrayList: ArrayList<String>
 )
+
 class ClassWithArray(
-    val items: Array<String>
+        val items: Array<String>
 )
+
 class Widget(
-    val name: String,
-    val value: Int
+        val name: String,
+        val value: Int
 )
+
 class ClassWithDependencies(
-    val widget: Widget
+        val widget: Widget
 )
+
 class ClassWithMixedNullables(
-    val count: Int,
-    val time: Instant?
+        val count: Int,
+        val time: Instant?
 )
+
 class ClassWithNullables(
-    val widget: Widget?
+        val widget: Widget?
 )
+
 class ClassWithComplexNullables(
-    val maybeWidgets: List<String?>?,
-    val maybeWidgetsArray: Array<String?>?
+        val maybeWidgets: List<String?>?,
+        val maybeWidgetsArray: Array<String?>?
 )
+
 class ClassWithNullableList(
-    val strings: List<String>?
+        val strings: List<String>?
 )
-class GenericClass<A, out B, out C: List<Any>>(
-    val a: A,
-    val b: List<B?>,
-    val c: C,
-    private val privateMember: A
+
+class ClassWithDeprecatedProperty(
+        @Deprecated("This property is deprecated")
+        val deprecatedProperty: String?
 )
+
+class GenericClass<A, out B, out C : List<Any>>(
+        val a: A,
+        val b: List<B?>,
+        val c: C,
+        private val privateMember: A
+)
+
 open class BaseClass(val a: Int)
-class DerivedClass(val b: List<String>): BaseClass(4)
+class DerivedClass(val b: List<String>) : BaseClass(4)
 class ClassWithMethods(val propertyMethod: () -> Int) {
     fun regularMethod() = 4
 }
+
 abstract class AbstractClass(val concreteProperty: String) {
     abstract val abstractProperty: Int
     abstract fun abstractMethod()
 }
+
 enum class Direction {
     North,
     West,
     South,
     East
 }
+
 class ClassWithEnum(val direction: Direction)
 data class DataClass(val prop: String)
 class ClassWithAny(val required: Any, val optional: Any?)
 
-class Tests: Spek({
+class Tests : Spek({
     describe("default") {
         it("handles empty class") {
             assertGeneratedCode(Empty::class, setOf("""
@@ -308,7 +323,7 @@ interface ClassWithDependencies {
         PROP: string;
     }
     """), classTransformers = listOf(
-                    object: ClassTransformer {
+                    object : ClassTransformer {
                         /**
                          * Returns the property name that will be included in the
                          * definition.
@@ -483,6 +498,28 @@ interface Widget {
         maybeWidgetsArray: (string | undefined)[] | undefined;
     }
     """), voidType = VoidType.UNDEFINED)
+        }
+
+        it("applies the given comment transformer") {
+            assertGeneratedCode(ClassWithDeprecatedProperty::class, setOf("""
+    interface ClassWithDeprecatedProperty {
+        /**
+         * @deprecated
+         *
+         * Replaced by another property
+         */
+        deprecatedProperty: string | null;
+    }
+    """), commentGenerator = object : CommentGenerator {
+                override fun generatePropertyComment(property: KProperty<*>, klass: KClass<*>): String? {
+                    return """
+                    | @deprecated
+                    | 
+                    | Replaced by another property
+                    """.trimMargin()
+                }
+            })
+
         }
     }
 })
