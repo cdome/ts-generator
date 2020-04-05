@@ -13,8 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package me.ntrrgc.tsGenerator.tests
 
-package me.ntrrgc.tsGenerator.tests;
-
-public interface TypeScriptDefinition {
-}
+interface TypeScriptDefinition
