@@ -248,7 +248,7 @@ class TypeScriptGenerator(
                     val propertyType = pipeline.transformPropertyType(property.returnType, property, klass)
 
                     val commentString = commentGenerator?.generatePropertyComment(property, klass)?.let { comment ->
-                        val comment = """/**
+                        val comment = """|    /**
                             ${comment.lines().map { line -> "|    *$line" }.joinToString("\n")}
                             |    */
                             |
