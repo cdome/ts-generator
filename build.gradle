@@ -15,19 +15,19 @@
  */
 
 group 'me.ntrrgc'
-version '1.1.2-SNAPSHOT'
+version '1.1.5-cdome'
 
 buildscript {
-    ext.kotlin_version = '1.3.50'
-    ext.spek_version = '1.1.5'
+    ext.kotlin_version = '1.3.72'
+    ext.spek_version = '2.0.10'
     ext.junit_version = '1.0.2'
 
     repositories {
         mavenCentral()
+        mavenLocal()
     }
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath "org.junit.platform:junit-platform-gradle-plugin:$junit_version"
     }
 }
 
@@ -37,17 +37,31 @@ allprojects {
     }
 }
 
-apply plugin: 'org.junit.platform.gradle.plugin'
+//apply plugin: 'org.junit.platform.gradle.plugin'
+apply plugin: 'kotlin'
+apply plugin: 'maven-publish'
 
-junitPlatform {
-    filters {
-        engines {
-            include 'spek'
-        }
+
+sourceCompatibility = "8"
+targetCompatibility = "8"
+
+compileKotlin {
+    kotlinOptions {
+        jvmTarget = "1.8"
     }
 }
 
-apply plugin: 'kotlin'
+compileTestKotlin {
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+}
+
+test {
+    useJUnitPlatform {
+        includeEngines 'spek', 'spek2'
+    }
+}
 
 task sourcesJar(type: Jar, dependsOn: classes) {
     classifier = 'sources'
@@ -59,19 +73,26 @@ artifacts {
 }
 
 repositories {
-    maven { url "https://dl.bintray.com/jetbrains/spek" }
+    mavenLocal()
+    jcenter()
     mavenCentral()
 }
 
-dependencies {
-    //implementation 'com.github.cdome:ts-generator:master-SNAPSHOT'
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from components.java
+        }
+    }
+}
 
-    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+dependencies {
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
     compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
 
     testCompile "com.winterbe:expekt:0.5.0"
-    testCompile "org.jetbrains.spek:spek-api:$spek_version"
-    testRuntime "org.jetbrains.spek:spek-junit-platform-engine:$spek_version"
-    testRuntime "org.junit.platform:junit-platform-launcher:$junit_version"
+    testImplementation "org.spekframework.spek2:spek-dsl-jvm:$spek_version"
+    testImplementation "org.spekframework.spek2:spek-runner-junit5:$spek_version"
+
     testCompile "com.google.code.findbugs:jsr305:3.0.1"
 }

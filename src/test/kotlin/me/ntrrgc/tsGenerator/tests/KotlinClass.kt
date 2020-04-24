@@ -13,21 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package me.ntrrgc.tsGenerator.tests
 
-package me.ntrrgc.tsGenerator.tests;
-
-
-import java.util.Optional;
-
-public class JavaClassWithOptional {
-    private String name;
-    private String surname;
-
-    public Optional<String> getSurname() {
-        return Optional.ofNullable(surname);
-    }
-
-    public String getName() {
-        return name;
-    }
-}
+class KotlinClass(val name: String, val results: IntArray, val finished: Boolean, var multidimensional: Array<CharArray>)

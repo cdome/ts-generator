@@ -20,7 +20,7 @@ internal class TypeScriptType private constructor(val types: List<String>) {
     companion object {
         fun single(type: String, nullable: Boolean, voidType: VoidType): TypeScriptType {
             return TypeScriptType(listOf(type)).let {
-                if (nullable) {
+                if (nullable && voidType != VoidType.ELVIS) { // Elivs operator is encoded in property name, not in the actual type
                     it or TypeScriptType(listOf(voidType.jsTypeName))
                 } else {
                     it
