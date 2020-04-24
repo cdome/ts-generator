@@ -22,8 +22,10 @@ import java.lang.reflect.Type
 import kotlin.reflect.*
 import kotlin.reflect.full.createType
 import kotlin.reflect.full.declaredMemberProperties
+import kotlin.reflect.full.defaultType
 import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.jvm.javaType
+import kotlin.reflect.jvm.jvmErasure
 
 /**
  * TypeScript definition generator.
@@ -74,20 +76,20 @@ import kotlin.reflect.jvm.javaType
  * version used supports it or the user wants to be extra explicit.
  */
 class TypeScriptGenerator(
-    rootClasses: Iterable<KClass<*>>,
-    private val mappings: Map<KClass<*>, String> = mapOf(),
-    classTransformers: List<ClassTransformer> = listOf(),
-    ignoreSuperclasses: Set<KClass<*>> = setOf(),
-    private val intTypeName: String = "number",
-    private val voidType: VoidType = VoidType.NULL
+        rootClasses: Iterable<KClass<*>>,
+        private val mappings: Map<KClass<*>, String> = mapOf(),
+        classTransformers: List<ClassTransformer> = listOf(),
+        ignoreSuperclasses: Set<KClass<*>> = setOf(),
+        private val intTypeName: String = "number",
+        private val voidType: VoidType = VoidType.NULL
 ) {
     private val visitedClasses: MutableSet<KClass<*>> = java.util.HashSet()
     private val generatedDefinitions = mutableListOf<String>()
     private val pipeline = ClassTransformerPipeline(classTransformers)
     private val ignoredSuperclasses = setOf(
-        Any::class,
-        java.io.Serializable::class,
-        Comparable::class
+            Any::class,
+            java.io.Serializable::class,
+            Comparable::class
     ).plus(ignoreSuperclasses)
 
     init {
@@ -100,7 +102,7 @@ class TypeScriptGenerator(
         fun isJavaBeanProperty(kProperty: KProperty<*>, klass: KClass<*>): Boolean {
             val beanInfo = Introspector.getBeanInfo(klass.java)
             return beanInfo.propertyDescriptors
-                .any { bean -> bean.name == kProperty.name }
+                    .any { bean -> bean.name == kProperty.name }
         }
     }
 
@@ -139,8 +141,7 @@ class TypeScriptGenerator(
                 @Suppress("IfThenToElvis")
                 if (classifier is KClass<*>) {
                     if (classifier.isSubclassOf(Iterable::class)
-                        || classifier.javaObjectType.isArray)
-                    {
+                            || classifier.javaObjectType.isArray) {
                         // Use native JS array
                         // Parenthesis are needed to disambiguate complex cases,
                         // e.g. (Pair<string|null, int>|null)[]|null
@@ -172,8 +173,8 @@ class TypeScriptGenerator(
                         // Use class name, with or without template parameters
                         formatClassType(classifier) + if (kType.arguments.isNotEmpty()) {
                             "<" + kType.arguments
-                                .map { arg -> formatKType(arg.type ?: KotlinAnyOrNull).formatWithoutParenthesis() }
-                                .joinToString(", ") + ">"
+                                    .map { arg -> formatKType(arg.type ?: KotlinAnyOrNull).formatWithoutParenthesis() }
+                                    .joinToString(", ") + ">"
                         } else ""
                     }
                 } else if (classifier is KTypeParameter) {
@@ -187,68 +188,86 @@ class TypeScriptGenerator(
         return TypeScriptType.single(classifierTsType, kType.isMarkedNullable, voidType)
     }
 
-    private fun generateEnum(klass: KClass<*>): String {
-        return "enum ${klass.simpleName} { ${klass.java.enumConstants
-            .map { constant: Any ->
-                constant.toString()
-            }
-            .joinToString(", ")
-        } }\n"
-    }
+    private fun generateEnum(klass: KClass<*>): String = "enum ${klass.simpleName} " +
+            "{ ${klass.java.enumConstants.map { it.toString() }.joinToString(", ")} }\n"
 
     private fun generateInterface(klass: KClass<*>): String {
         val supertypes = klass.supertypes
-            .filterNot { it.classifier in ignoredSuperclasses }
+                .filterNot { it.classifier in ignoredSuperclasses }
         val extendsString = if (supertypes.isNotEmpty()) {
             " extends " + supertypes
-                .map { formatKType(it).formatWithoutParenthesis() }
-                .joinToString(", ")
+                    .map { formatKType(it).formatWithoutParenthesis() }
+                    .joinToString(", ")
         } else ""
 
         val templateParameters = if (klass.typeParameters.isNotEmpty()) {
             "<" + klass.typeParameters
-                .map { typeParameter ->
-                    val bounds = typeParameter.upperBounds
-                        .filter { it.classifier != Any::class }
-                    typeParameter.name + if (bounds.isNotEmpty()) {
-                        " extends " + bounds
-                            .map { bound ->
-                                formatKType(bound).formatWithoutParenthesis()
-                            }
-                            .joinToString(" & ")
-                    } else {
-                        ""
+                    .map { typeParameter ->
+                        val bounds = typeParameter.upperBounds
+                                .filter { it.classifier != Any::class }
+                        typeParameter.name + if (bounds.isNotEmpty()) {
+                            " extends " + bounds
+                                    .map { bound ->
+                                        formatKType(bound).formatWithoutParenthesis()
+                                    }
+                                    .joinToString(" & ")
+                        } else {
+                            ""
+                        }
                     }
-                }
-                .joinToString(", ") + ">"
+                    .joinToString(", ") + ">"
         } else {
             ""
         }
 
         return "interface ${klass.simpleName}$templateParameters$extendsString {\n" +
-            klass.declaredMemberProperties
-                .filter { !isFunctionType(it.returnType.javaType) }
-                .filter {
-                    it.visibility == KVisibility.PUBLIC || isJavaBeanProperty(it, klass)
-                }
-                .let { propertyList ->
-                    pipeline.transformPropertyList(propertyList, klass)
-                }
-                .map { property ->
-                    val propertyName = pipeline.transformPropertyName(property.name, property, klass)
-                    val propertyType = pipeline.transformPropertyType(property.returnType, property, klass)
+                klass.declaredMemberProperties
+                        .filter { !isFunctionType(it.returnType.javaType) }
+                        .filter {
+                            it.visibility == KVisibility.PUBLIC || isJavaBeanProperty(it, klass)
+                        }
+                        .let { propertyList ->
+                            pipeline.transformPropertyList(propertyList, klass)
+                        }
+                        .map { property ->
+                            val propertyName = pipeline.transformPropertyName(property.name, property, klass)
 
-                    val formattedPropertyType = formatKType(propertyType).formatWithoutParenthesis()
-                    "    $propertyName: $formattedPropertyType;\n"
-                }
-                .joinToString("") +
-            "}"
+                            val propertyTypes = if (property.returnType.classifier is KClass<*>) {
+                                val ret = property.returnType.classifier as KClass<*>
+                                if (ret.isSealed && ret.sealedSubclasses.isNotEmpty()) {
+                                    (property.returnType.classifier as KClass<*>).sealedSubclasses.map {
+                                        pipeline.transformPropertyType(it.createType(
+                                                property.returnType.arguments, property.returnType.isMarkedNullable, property.returnType.annotations
+                                        ), property, klass)
+                                    }
+                                } else {
+                                    listOf(pipeline.transformPropertyType(property.returnType, property, klass))
+                                }
+                            } else {
+                                listOf(pipeline.transformPropertyType(property.returnType, property, klass))
+                            }
+
+                            val tsType = if (propertyTypes.size == 1)
+                                formatKType(propertyTypes[0])
+                            else {
+                                var tempType = formatKType(propertyTypes[0])
+                                propertyTypes.forEach {
+                                    tempType = tempType.or(formatKType(it))
+                                }
+                                tempType
+                            }
+
+                            val formattedPropertyType = tsType.formatWithoutParenthesis()
+                            "    $propertyName: $formattedPropertyType;\n"
+                        }
+                        .joinToString("") +
+                "}"
     }
 
     private fun isFunctionType(javaType: Type): Boolean {
         return javaType is KCallable<*>
-            || javaType.typeName.startsWith("kotlin.jvm.functions.")
-            || (javaType is ParameterizedType && isFunctionType(javaType.rawType))
+                || javaType.typeName.startsWith("kotlin.jvm.functions.")
+                || (javaType is ParameterizedType && isFunctionType(javaType.rawType))
     }
 
     private fun generateDefinition(klass: KClass<*>): String {

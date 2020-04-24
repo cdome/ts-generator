@@ -311,6 +311,23 @@ interface ClassWithMember {
     """))
         }
 
+        it("handles KotlinSealedClass") {
+            assertGeneratedCode(KotlinSealedClass::class, setOf("""
+    interface KotlinSealedClass {
+        field: ClassA | ClassB;
+    }
+    """, """
+    interface ClassA extends SealedClass {
+        p: string;
+    }""", """
+    interface ClassB extends SealedClass {
+        p: int;
+    }""", """
+    interface SealedClass {
+    }
+    """.trimIndent()))
+        }
+
         it("supports type mapping for classes") {
             assertGeneratedCode(ClassWithDependencies::class, setOf("""
 interface ClassWithDependencies {
