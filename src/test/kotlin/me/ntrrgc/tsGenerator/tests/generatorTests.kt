@@ -21,8 +21,8 @@ import me.ntrrgc.tsGenerator.ClassTransformer
 import me.ntrrgc.tsGenerator.TypeScriptGenerator
 import me.ntrrgc.tsGenerator.VoidType
 import me.ntrrgc.tsGenerator.onlyOnSubclassesOf
-import org.jetbrains.spek.api.Spek
-import org.jetbrains.spek.api.dsl.it
+import org.spekframework.spek2.Spek
+import org.spekframework.spek2.style.specification.describe
 import java.beans.Introspector
 import java.time.Instant
 import java.util.*
@@ -38,17 +38,16 @@ fun assertGeneratedCode(klass: KClass<*>,
                         mappings: Map<KClass<*>, String> = mapOf(),
                         classTransformers: List<ClassTransformer> = listOf(),
                         ignoreSuperclasses: Set<KClass<*>> = setOf(),
-                        voidType: VoidType = VoidType.NULL)
-{
+                        voidType: VoidType = VoidType.NULL) {
     val generator = TypeScriptGenerator(listOf(klass), mappings, classTransformers,
-        ignoreSuperclasses, intTypeName = "int", voidType = voidType)
+            ignoreSuperclasses, intTypeName = "int", voidType = voidType)
 
     val expected = expectedOutput
-        .map(TypeScriptDefinitionFactory::fromCode)
-        .toSet()
+            .map(TypeScriptDefinitionFactory::fromCode)
+            .toSet()
     val actual = generator.individualDefinitions
-        .map(TypeScriptDefinitionFactory::fromCode)
-        .toSet()
+            .map(TypeScriptDefinitionFactory::fromCode)
+            .toSet()
 
     actual.should.equal(expected)
 }
@@ -56,180 +55,194 @@ fun assertGeneratedCode(klass: KClass<*>,
 class Empty
 class ClassWithMember(val a: String)
 class SimpleTypes(
-    val aString: String,
-    var anInt: Int,
-    val aDouble: Double,
-    private val privateMember: String
+        val aString: String,
+        var anInt: Int,
+        val aDouble: Double,
+        private val privateMember: String
 )
+
 class ClassWithLists(
-    val aList: List<String>,
-    val anArrayList: ArrayList<String>
+        val aList: List<String>,
+        val anArrayList: ArrayList<String>
 )
+
 class ClassWithArray(
-    val items: Array<String>
+        val items: Array<String>
 )
+
 class Widget(
-    val name: String,
-    val value: Int
+        val name: String,
+        val value: Int
 )
+
 class ClassWithDependencies(
-    val widget: Widget
+        val widget: Widget
 )
+
 class ClassWithMixedNullables(
-    val count: Int,
-    val time: Instant?
+        val count: Int,
+        val time: Instant?
 )
+
 class ClassWithNullables(
-    val widget: Widget?
+        val widget: Widget?
 )
+
 class ClassWithComplexNullables(
-    val maybeWidgets: List<String?>?,
-    val maybeWidgetsArray: Array<String?>?
+        val maybeWidgets: List<String?>?,
+        val maybeWidgetsArray: Array<String?>?
 )
+
 class ClassWithNullableList(
-    val strings: List<String>?
+        val strings: List<String>?
 )
-open class GenericClass<A, out B, out C: List<Any>>(
-    val a: A,
-    val b: List<B?>,
-    val c: C,
-    private val privateMember: A
+
+open class GenericClass<A, out B, out C : List<Any>>(
+        val a: A,
+        val b: List<B?>,
+        val c: C,
+        private val privateMember: A
 )
+
 open class BaseClass(val a: Int)
-class DerivedClass(val b: List<String>): BaseClass(4)
-class GenericDerivedClass<B>(a: Empty, b: List<B?>, c: ArrayList<String>): GenericClass<Empty, B, ArrayList<String>>(a, b, c, a)
+class DerivedClass(val b: List<String>) : BaseClass(4)
+class GenericDerivedClass<B>(a: Empty, b: List<B?>, c: ArrayList<String>) : GenericClass<Empty, B, ArrayList<String>>(a, b, c, a)
 class ClassWithMethods(val propertyMethod: () -> Int) {
     fun regularMethod() = 4
 }
+
 abstract class AbstractClass(val concreteProperty: String) {
     abstract val abstractProperty: Int
     abstract fun abstractMethod()
 }
+
 enum class Direction {
     North,
     West,
     South,
     East
 }
+
 class ClassWithEnum(val direction: Direction)
 data class DataClass(val prop: String)
 class ClassWithAny(val required: Any, val optional: Any?)
 class ClassWithMap(val values: Map<String, String>)
 class ClassWithEnumMap(val values: Map<Direction, String>)
 
-class Tests: Spek({
-    it("handles empty class") {
-        assertGeneratedCode(Empty::class, setOf("""
+class Tests : Spek({
+    describe("Tests") {
+        it("handles empty class") {
+            assertGeneratedCode(Empty::class, setOf("""
 interface Empty {
 }
 """))
-    }
+        }
 
-    it("handles classes with a single member") {
-        assertGeneratedCode(ClassWithMember::class, setOf("""
+        it("handles classes with a single member") {
+            assertGeneratedCode(ClassWithMember::class, setOf("""
 interface ClassWithMember {
     a: string;
 }
 """))
-    }
+        }
 
-    it("handles SimpleTypes") {
-        assertGeneratedCode(SimpleTypes::class, setOf("""
+        it("handles SimpleTypes") {
+            assertGeneratedCode(SimpleTypes::class, setOf("""
     interface SimpleTypes {
         aString: string;
         anInt: int;
         aDouble: number;
     }
     """))
-    }
+        }
 
-    it("handles ClassWithLists") {
-        assertGeneratedCode(ClassWithLists::class, setOf("""
+        it("handles ClassWithLists") {
+            assertGeneratedCode(ClassWithLists::class, setOf("""
     interface ClassWithLists {
         aList: string[];
         anArrayList: string[];
     }
     """))
-    }
+        }
 
-    it("handles ClassWithArray") {
-        assertGeneratedCode(ClassWithArray::class, setOf("""
+        it("handles ClassWithArray") {
+            assertGeneratedCode(ClassWithArray::class, setOf("""
     interface ClassWithArray {
         items: string[];
     }
     """))
-    }
+        }
 
-    val widget = """
+        val widget = """
     interface Widget {
         name: string;
         value: int;
     }
     """
 
-    it("handles ClassWithDependencies") {
-        assertGeneratedCode(ClassWithDependencies::class, setOf("""
+        it("handles ClassWithDependencies") {
+            assertGeneratedCode(ClassWithDependencies::class, setOf("""
     interface ClassWithDependencies {
         widget: Widget;
     }
     """, widget))
-    }
+        }
 
-    it("handles ClassWithNullables") {
-        assertGeneratedCode(ClassWithNullables::class, setOf("""
+        it("handles ClassWithNullables") {
+            assertGeneratedCode(ClassWithNullables::class, setOf("""
     interface ClassWithNullables {
         widget: Widget | null;
     }
     """, widget))
-    }
+        }
 
-    it("handles ClassWithMixedNullables using mapping") {
-        assertGeneratedCode(ClassWithMixedNullables::class, setOf("""
+        it("handles ClassWithMixedNullables using mapping") {
+            assertGeneratedCode(ClassWithMixedNullables::class, setOf("""
     interface ClassWithMixedNullables {
         count: int;
         time: string | null;
     }
     """), mappings = mapOf(Instant::class to "string"))
-    }
+        }
 
-    it("handles ClassWithMixedNullables using mapping and VoidTypes") {
-        assertGeneratedCode(ClassWithMixedNullables::class, setOf("""
+        it("handles ClassWithMixedNullables using mapping and VoidTypes") {
+            assertGeneratedCode(ClassWithMixedNullables::class, setOf("""
     interface ClassWithMixedNullables {
         count: int;
         time: string | undefined;
     }
     """), mappings = mapOf(Instant::class to "string"), voidType = VoidType.UNDEFINED)
-    }
+        }
 
-    it("handles ClassWithComplexNullables") {
-        assertGeneratedCode(ClassWithComplexNullables::class, setOf("""
+        it("handles ClassWithComplexNullables") {
+            assertGeneratedCode(ClassWithComplexNullables::class, setOf("""
     interface ClassWithComplexNullables {
         maybeWidgets: (string | null)[] | null;
         maybeWidgetsArray: (string | null)[] | null;
     }
     """))
-    }
+        }
 
-    it("handles ClassWithNullableList") {
-        assertGeneratedCode(ClassWithNullableList::class, setOf("""
+        it("handles ClassWithNullableList") {
+            assertGeneratedCode(ClassWithNullableList::class, setOf("""
     interface ClassWithNullableList {
         strings: string[] | null;
     }
     """))
-    }
+        }
 
-    it("handles GenericClass") {
-        assertGeneratedCode(GenericClass::class, setOf("""
+        it("handles GenericClass") {
+            assertGeneratedCode(GenericClass::class, setOf("""
     interface GenericClass<A, B, C extends any[]> {
         a: A;
         b: (B | null)[];
         c: C;
     }
     """))
-    }
+        }
 
-    it("handles DerivedClass") {
-        assertGeneratedCode(DerivedClass::class, setOf("""
+        it("handles DerivedClass") {
+            assertGeneratedCode(DerivedClass::class, setOf("""
     interface DerivedClass extends BaseClass {
         b: string[];
     }
@@ -238,105 +251,105 @@ interface ClassWithMember {
         a: int;
     }
     """))
-    }
+        }
 
-    it("handles GenericDerivedClass") {
-        assertGeneratedCode(GenericDerivedClass::class, setOf("""
+        it("handles GenericDerivedClass") {
+            assertGeneratedCode(GenericDerivedClass::class, setOf("""
     interface GenericClass<A, B, C extends any[]> {
         a: A;
         b: (B | null)[];
         c: C;
     }
-    ""","""
+    """, """
     interface Empty {
     }
-    ""","""
+    """, """
     interface GenericDerivedClass<B> extends GenericClass<Empty, B, string[]> {
     }
     """))
-    }
+        }
 
-    it("handles ClassWithMethods") {
-        assertGeneratedCode(ClassWithMethods::class, setOf("""
+        it("handles ClassWithMethods") {
+            assertGeneratedCode(ClassWithMethods::class, setOf("""
     interface ClassWithMethods {
     }
     """))
-    }
+        }
 
-    it("handles AbstractClass") {
-        assertGeneratedCode(AbstractClass::class, setOf("""
+        it("handles AbstractClass") {
+            assertGeneratedCode(AbstractClass::class, setOf("""
     interface AbstractClass {
         concreteProperty: string;
         abstractProperty: int;
     }
     """))
-    }
+        }
 
-    it("handles ClassWithEnum") {
-        assertGeneratedCode(ClassWithEnum::class, setOf("""
+        it("handles ClassWithEnum") {
+            assertGeneratedCode(ClassWithEnum::class, setOf("""
     interface ClassWithEnum {
         direction: Direction;
     }
-    """, """type Direction = "North" | "West" | "South" | "East";"""))
-    }
+    """, """enum Direction { North, West, South, East }"""))
+        }
 
-    it("handles DataClass") {
-        assertGeneratedCode(DataClass::class, setOf("""
+        it("handles DataClass") {
+            assertGeneratedCode(DataClass::class, setOf("""
     interface DataClass {
         prop: string;
     }
     """))
-    }
+        }
 
-    it("handles ClassWithAny") {
-        // Note: in TypeScript any includes null and undefined.
-        assertGeneratedCode(ClassWithAny::class, setOf("""
+        it("handles ClassWithAny") {
+            // Note: in TypeScript any includes null and undefined.
+            assertGeneratedCode(ClassWithAny::class, setOf("""
     interface ClassWithAny {
         required: any;
         optional: any;
     }
     """))
-    }
+        }
 
-    it("supports type mapping for classes") {
-        assertGeneratedCode(ClassWithDependencies::class, setOf("""
+        it("supports type mapping for classes") {
+            assertGeneratedCode(ClassWithDependencies::class, setOf("""
 interface ClassWithDependencies {
     widget: CustomWidget;
 }
 """), mappings = mapOf(Widget::class to "CustomWidget"))
-    }
+        }
 
-    it("supports type mapping for basic types") {
-        assertGeneratedCode(DataClass::class, setOf("""
+        it("supports type mapping for basic types") {
+            assertGeneratedCode(DataClass::class, setOf("""
     interface DataClass {
         prop: CustomString;
     }
     """), mappings = mapOf(String::class to "CustomString"))
-    }
+        }
 
-    it("supports transforming property names") {
-        assertGeneratedCode(DataClass::class, setOf("""
+        it("supports transforming property names") {
+            assertGeneratedCode(DataClass::class, setOf("""
     interface DataClass {
         PROP: string;
     }
     """), classTransformers = listOf(
-            object: ClassTransformer {
-                /**
-                 * Returns the property name that will be included in the
-                 * definition.
-                 *
-                 * If it returns null, the value of the next class transformer
-                 * in the pipeline is used.
-                 */
-                override fun transformPropertyName(propertyName: String, property: KProperty<*>, klass: KClass<*>): String {
-                    return propertyName.toUpperCase()
-                }
-            }
-        ))
-    }
+                    object : ClassTransformer {
+                        /**
+                         * Returns the property name that will be included in the
+                         * definition.
+                         *
+                         * If it returns null, the value of the next class transformer
+                         * in the pipeline is used.
+                         */
+                        override fun transformPropertyName(propertyName: String, property: KProperty<*>, klass: KClass<*>): String {
+                            return propertyName.toUpperCase()
+                        }
+                    }
+            ))
+        }
 
-    it("supports transforming only some classes") {
-        assertGeneratedCode(ClassWithDependencies::class, setOf("""
+        it("supports transforming only some classes") {
+            assertGeneratedCode(ClassWithDependencies::class, setOf("""
 interface ClassWithDependencies {
     widget: Widget;
 }
@@ -346,49 +359,49 @@ interface Widget {
     VALUE: int;
 }
 """), classTransformers = listOf(
-            object : ClassTransformer {
-                override fun transformPropertyName(propertyName: String, property: KProperty<*>, klass: KClass<*>): String {
-                    return propertyName.toUpperCase()
-                }
-            }.onlyOnSubclassesOf(Widget::class)
-        ))
-    }
+                    object : ClassTransformer {
+                        override fun transformPropertyName(propertyName: String, property: KProperty<*>, klass: KClass<*>): String {
+                            return propertyName.toUpperCase()
+                        }
+                    }.onlyOnSubclassesOf(Widget::class)
+            ))
+        }
 
-    it("supports transforming types") {
-        assertGeneratedCode(DataClass::class, setOf("""
+        it("supports transforming types") {
+            assertGeneratedCode(DataClass::class, setOf("""
     interface DataClass {
         prop: int | null;
     }
     """), classTransformers = listOf(
-            object : ClassTransformer {
-                override fun transformPropertyType(type: KType, property: KProperty<*>, klass: KClass<*>): KType {
-                    if (klass == DataClass::class && property.name == "prop") {
-                        return Int::class.createType(nullable = true)
-                    } else {
-                        return type
+                    object : ClassTransformer {
+                        override fun transformPropertyType(type: KType, property: KProperty<*>, klass: KClass<*>): KType {
+                            if (klass == DataClass::class && property.name == "prop") {
+                                return Int::class.createType(nullable = true)
+                            } else {
+                                return type
+                            }
+                        }
                     }
-                }
-            }
-        ))
-    }
+            ))
+        }
 
-    it("supports filtering properties") {
-        assertGeneratedCode(SimpleTypes::class, setOf("""
+        it("supports filtering properties") {
+            assertGeneratedCode(SimpleTypes::class, setOf("""
     interface SimpleTypes {
         aString: string;
         aDouble: number;
     }
     """), classTransformers = listOf(
-            object : ClassTransformer {
-                override fun transformPropertyList(properties: List<KProperty<*>>, klass: KClass<*>): List<KProperty<*>> {
-                    return properties.filter { it.name != "anInt" }
-                }
-            }
-        ))
-    }
+                    object : ClassTransformer {
+                        override fun transformPropertyList(properties: List<KProperty<*>>, klass: KClass<*>): List<KProperty<*>> {
+                            return properties.filter { it.name != "anInt" }
+                        }
+                    }
+            ))
+        }
 
-    it("supports filtering subclasses") {
-        assertGeneratedCode(DerivedClass::class, setOf("""
+        it("supports filtering subclasses") {
+            assertGeneratedCode(DerivedClass::class, setOf("""
     interface DerivedClass extends BaseClass {
         B: string[];
     }
@@ -397,121 +410,122 @@ interface Widget {
         A: int;
     }
     """), classTransformers = listOf(
-            object : ClassTransformer {
-                override fun transformPropertyName(propertyName: String, property: KProperty<*>, klass: KClass<*>): String {
-                    return propertyName.toUpperCase()
-                }
-            }.onlyOnSubclassesOf(BaseClass::class)
-        ))
-    }
+                    object : ClassTransformer {
+                        override fun transformPropertyName(propertyName: String, property: KProperty<*>, klass: KClass<*>): String {
+                            return propertyName.toUpperCase()
+                        }
+                    }.onlyOnSubclassesOf(BaseClass::class)
+            ))
+        }
 
-    it("uses all transformers in pipeline") {
-        assertGeneratedCode(SimpleTypes::class, setOf("""
+        it("uses all transformers in pipeline") {
+            assertGeneratedCode(SimpleTypes::class, setOf("""
     interface SimpleTypes {
         aString12: string;
         aDouble12: number;
         anInt12: int;
     }
     """), classTransformers = listOf(
-            object : ClassTransformer {
-                override fun transformPropertyName(propertyName: String, property: KProperty<*>, klass: KClass<*>): String {
-                    return propertyName + "1"
-                }
-            },
-            object : ClassTransformer {
-            },
-            object : ClassTransformer {
-                override fun transformPropertyName(propertyName: String, property: KProperty<*>, klass: KClass<*>): String {
-                    return propertyName + "2"
-                }
-            }
-        ))
-    }
+                    object : ClassTransformer {
+                        override fun transformPropertyName(propertyName: String, property: KProperty<*>, klass: KClass<*>): String {
+                            return propertyName + "1"
+                        }
+                    },
+                    object : ClassTransformer {
+                    },
+                    object : ClassTransformer {
+                        override fun transformPropertyName(propertyName: String, property: KProperty<*>, klass: KClass<*>): String {
+                            return propertyName + "2"
+                        }
+                    }
+            ))
+        }
 
-    it("handles JavaClass") {
-        assertGeneratedCode(JavaClass::class, setOf("""
-    interface JavaClass {
+        it("handles KotlinClass") {
+            assertGeneratedCode(KotlinClass::class, setOf("""
+    interface KotlinClass {
         name: string;
         results: int[];
         multidimensional: string[][];
         finished: boolean;
     }
     """))
-    }
+        }
 
-    it("handles JavaClassWithNullables") {
-        assertGeneratedCode(JavaClassWithNullables::class, setOf("""
-    interface JavaClassWithNullables {
+        it("handles KotlinClassWithNullables") {
+            assertGeneratedCode(KotlinClassWithNullables::class, setOf("""
+    interface KotlinClassWithNullables {
         name: string;
         results: int[];
         nextResults: int[] | null;
     }
     """))
-    }
+        }
 
-    it("handles JavaClassWithNonnullAsDefault") {
-        assertGeneratedCode(JavaClassWithNonnullAsDefault::class, setOf("""
+        it("handles KotlinClassWithNonnullAsDefault") {
+            assertGeneratedCode(JavaClassWithNonnullAsDefault::class, setOf("""
     interface JavaClassWithNonnullAsDefault {
         name: string;
         results: int[];
         nextResults: int[] | null;
     }
     """))
-    }
+        }
 
-    it("handles JavaClassWithOptional") {
-        assertGeneratedCode(JavaClassWithOptional::class, setOf("""
-    interface JavaClassWithOptional {
+        it("handles KotlinClassWithOptional") {
+            assertGeneratedCode(KotlinClassWithOptional::class, setOf("""
+    interface KotlinClassWithOptional {
         name: string;
         surname: string | null;
     }
     """), classTransformers = listOf(
-            object : ClassTransformer {
-                override fun transformPropertyType(
-                    type: KType,
-                    property: KProperty<*>,
-                    klass: KClass<*>
-                ): KType {
-                    val bean = Introspector.getBeanInfo(klass.java)
-                        .propertyDescriptors
-                        .find { it.name == property.name }
+                    object : ClassTransformer {
+                        override fun transformPropertyType(
+                                type: KType,
+                                property: KProperty<*>,
+                                klass: KClass<*>
+                        ): KType {
+                            val bean = Introspector.getBeanInfo(klass.java)
+                                    .propertyDescriptors
+                                    .find { it.name == property.name }
 
-                    val getterReturnType = bean?.readMethod?.kotlinFunction?.returnType
-                    if (getterReturnType?.classifier == Optional::class) {
-                        val wrappedType = getterReturnType.arguments.first().type!!
-                        return wrappedType.withNullability(true)
-                    } else {
-                        return type
+                            val getterReturnType = bean?.readMethod?.kotlinFunction?.returnType
+                            if (getterReturnType?.classifier == Optional::class) {
+                                val wrappedType = getterReturnType.arguments.first().type!!
+                                return wrappedType.withNullability(true)
+                            } else {
+                                return type
+                            }
+                        }
                     }
-                }
-            }
-        ))
-    }
+            ))
+        }
 
-    it("handles ClassWithComplexNullables when serializing as undefined") {
-        assertGeneratedCode(ClassWithComplexNullables::class, setOf("""
+        it("handles ClassWithComplexNullables when serializing as undefined") {
+            assertGeneratedCode(ClassWithComplexNullables::class, setOf("""
     interface ClassWithComplexNullables {
         maybeWidgets: (string | undefined)[] | undefined;
         maybeWidgetsArray: (string | undefined)[] | undefined;
     }
     """), voidType = VoidType.UNDEFINED)
-    }
+        }
 
-    it("transforms ClassWithMap") {
-        assertGeneratedCode(ClassWithMap::class, setOf("""
+        it("transforms ClassWithMap") {
+            assertGeneratedCode(ClassWithMap::class, setOf("""
     interface ClassWithMap {
         values: { [key: string]: string };
     }
     """))
-    }
+        }
 
-    it("transforms ClassWithEnumMap") {
-        assertGeneratedCode(ClassWithEnumMap::class, setOf("""
-    type Direction = "North" | "West" | "South" | "East";
+        it("transforms ClassWithEnumMap") {
+            assertGeneratedCode(ClassWithEnumMap::class, setOf("""
+    enum Direction { North, West, South, East }
     """, """
     interface ClassWithEnumMap {
         values: { [key in Direction]: string };
     }
     """))
+        }
     }
 })

@@ -13,19 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package me.ntrrgc.tsGenerator.tests
 
-object TypeScriptDefinitionFactory {
-    fun fromCode(tsCode: String): TypeScriptDefinition {
-        val code = tsCode.trim()
+import javax.annotation.Nonnull
 
-        if (code.startsWith("interface")) {
-            return ClassDefinition(code)
-        } else if (code.startsWith("enum")) {
-            return EnumDefinition(code)
-        } else {
-            throw RuntimeException("Unknown definition type: $code")
-        }
-    }
-}
+class KotlinClassWithNullables internal constructor(@field:Nonnull @get:Nonnull
+                                                  @param:Nonnull var name: String, @field:Nonnull @get:Nonnull
+                                                  @param:Nonnull var results: IntArray, var nextResults: IntArray?)
