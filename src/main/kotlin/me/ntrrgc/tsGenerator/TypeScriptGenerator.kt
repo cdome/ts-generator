@@ -188,8 +188,8 @@ class TypeScriptGenerator(
         return TypeScriptType.single(classifierTsType, kType.isMarkedNullable, voidType)
     }
 
-    private fun generateEnum(klass: KClass<*>): String = "enum ${klass.simpleName} " +
-            "{ ${klass.java.enumConstants.map { it.toString() }.joinToString(", ")} }\n"
+    private fun generateEnum(klass: KClass<*>): String =
+            "type ${klass.simpleName} = ${klass.java.enumConstants.map { it.toString().toJSString() }.joinToString(" | ")};"
 
     private fun generateInterface(klass: KClass<*>): String {
         val supertypes = klass.supertypes

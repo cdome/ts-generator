@@ -22,7 +22,7 @@ object TypeScriptDefinitionFactory {
 
         if (code.startsWith("interface")) {
             return ClassDefinition(code)
-        } else if (code.startsWith("enum")) {
+        } else if (code.startsWith("type")) {
             return EnumDefinition(code)
         } else {
             throw RuntimeException("Unknown definition type: $code")

@@ -290,7 +290,7 @@ interface ClassWithMember {
     interface ClassWithEnum {
         direction: Direction;
     }
-    """, """enum Direction { North, West, South, East }"""))
+    """, """type Direction = "North" | "West" | "South" | "East";"""))
         }
 
         it("handles DataClass") {
@@ -537,7 +537,7 @@ interface Widget {
 
         it("transforms ClassWithEnumMap") {
             assertGeneratedCode(ClassWithEnumMap::class, setOf("""
-    enum Direction { North, West, South, East }
+    type Direction = "North" | "West" | "South" | "East";
     """, """
     interface ClassWithEnumMap {
         values: { [key in Direction]: string };
